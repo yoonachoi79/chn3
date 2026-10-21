@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}*,*::before,*::after{box-sizing:border-box}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>1339 상황실</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: dispatch-console. One centred stage card; grade colours are the only loud element. */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --ink:#18212b; --muted:#5b6876; --line:#d5dbe2; --accent:#1f5f8b;
+  --g1:#c62828; --g2:#e0661b; --g3:#b98a00; --g4:#1f7a6d; --onG:#ffffff;
+  --ok:#2e7d32; --no:#c62828;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10161d; --panel:#18212b; --ink:#e7edf3; --muted:#9aa8b6; --line:#2b3744; --accent:#6fb3e0;
+  --g1:#e04848; --g2:#f0813a; --g3:#d9a91c; --g4:#2fa392; --onG:#ffffff; --ok:#5cbf62; --no:#ef6060; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10161d; --panel:#18212b; --ink:#e7edf3; --muted:#9aa8b6; --line:#2b3744; --accent:#6fb3e0;
+  --g1:#e04848; --g2:#f0813a; --g3:#d9a91c; --g4:#2fa392; --onG:#ffffff; --ok:#5cbf62; --no:#ef6060; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:18px;min-height:100%}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand b{font-family:var(--f-mono);font-size:1.25rem;letter-spacing:.04em;color:var(--accent)}
+.brand span{color:var(--muted);font-size:.9rem}
+.pill{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-variant-numeric:tabular-nums}
+.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 12px;font-size:.9rem}
+.ghost:hover{color:var(--ink);border-color:var(--muted)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
+h1{font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.2;margin:0;text-wrap:balance}
+h2{font-size:1.2rem;margin:0}
+.eyebrow{font-family:var(--f-mono);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.muted{color:var(--muted)}
+.primary{background:var(--accent);color:var(--panel);border:0;border-radius:10px;padding:12px 20px;font-weight:700;font-size:1rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.choice button{text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;color:var(--ink);display:flex;flex-direction:column;gap:6px}
+.choice button:hover{border-color:var(--accent)}
+.choice button strong{font-size:1.2rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:none;border:0;padding:8px 14px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--panel);font-weight:700}
+
+/* grade chips */
+.g1{--g:var(--g1)}.g2{--g:var(--g2)}.g3{--g:var(--g3)}.g4{--g:var(--g4)}
+.chip{display:inline-block;background:var(--g);color:var(--onG);font-weight:700;border-radius:6px;padding:1px 8px;font-size:.9em}
+
+/* case card */
+.case{display:flex;flex-direction:column;gap:14px}
+.caseno{font-family:var(--f-mono);font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
+.clue{border-left:4px solid var(--line);padding:4px 0 4px 14px}
+.clue.new{border-color:var(--accent)}
+.clue small{display:block;font-family:var(--f-mono);font-size:.75rem;letter-spacing:.1em;color:var(--muted)}
+.q{font-weight:700}
+
+/* teacher (projector) */
+.T .clue p{font-size:clamp(1.3rem,2.6vw,2rem);margin:2px 0;line-height:1.45}
+.T .q{font-size:clamp(1.1rem,2vw,1.5rem)}
+.T .stage{min-height:52vh}
+.legend{display:flex;gap:10px;flex-wrap:wrap}
+.legend span{font-size:clamp(1rem,1.6vw,1.25rem)}
+.ans{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start}
+.bigG{background:var(--g);color:var(--onG);border-radius:14px;padding:14px 22px;font-size:clamp(2rem,5vw,3.6rem);font-weight:700;line-height:1;text-align:center}
+.bigG small{display:block;font-size:.3em;font-weight:500;margin-top:6px;opacity:.9}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px;margin:8px 0 0}
+.facts div{min-width:0}
+.facts dt{font-size:.8rem;color:var(--muted)}
+.facts dd{margin:0;font-weight:700;font-size:clamp(1rem,1.6vw,1.3rem)}
+.dname{font-size:clamp(1.5rem,3vw,2.3rem);font-weight:700;margin:0}
+.tip{margin-top:12px;padding:10px 14px;border-radius:10px;background:var(--bg);font-size:clamp(1rem,1.6vw,1.2rem)}
+.ctrl{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.timer{font-family:var(--f-mono);font-size:1.4rem;font-variant-numeric:tabular-nums;color:var(--muted)}
+.timer.hot{color:var(--g1)}
+.kbd{font-family:var(--f-mono);font-size:.8rem;color:var(--muted)}
+.qr{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.qr #qrbox{background:#fff;padding:10px;border-radius:10px;line-height:0}
+.qr #qrbox img,.qr #qrbox canvas{width:180px;height:180px}
+.linkbox{font-family:var(--f-mono);font-size:.85rem;word-break:break-all;background:var(--bg);border-radius:8px;padding:8px 10px}
+
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.8rem;color:var(--muted);font-weight:500}
+.tblwrap{overflow-x:auto}
+
+/* student (phone) */
+.S .wrap{max-width:560px}
+.S .clue p{font-size:1.1rem;margin:2px 0}
+.gbtns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.gbtns button{background:var(--g);color:var(--onG);border:0;border-radius:12px;padding:18px 8px;font-size:1.5rem;font-weight:700}
+.gbtns button[aria-pressed="true"]{outline:4px solid var(--ink);outline-offset:2px}
+.hint{font-size:.9rem;color:var(--muted)}
+.result{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mark{font-weight:700}
+.mark.ok{color:var(--ok)}.mark.no{color:var(--no)}
+.result .mark{font-size:1.5rem}
+.log li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.log{list-style:none;margin:0;padding:0}
+.log li span:first-child{min-width:0}
+@media (max-width:640px){.ans{grid-template-columns:1fr}.qr{grid-template-columns:1fr}.panel{padding:18px}}
+@media (prefers-reduced-motion:no-preference){.fade{animation:fade .35s ease-out}@keyframes fade{from{opacity:.25;transform:translateY(4px)}to{opacity:1;transform:none}}}
+</style>
+
+</head>
+<body>
+<div id="app" class="wrap"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const STUDENT_URL = location.origin + location.pathname + "#student";
+
+const CASES = [
+ {id:1, c1:"45세 남성. 해외 출장에서 귀국한 지 5일째, 38.5℃ 발열과 기침, 호흡곤란이 있다.", c2:"출장지는 사우디아라비아이고, 현지에서 낙타농장을 방문했다.",
+  name:"중동호흡기증후군(MERS)", g:1, due:"즉시", iso:"음압격리 등 높은 수준", sv:"전수", key:"중동 방문, 낙타 접촉",
+  tip:"해외 유입 고위험 호흡기 감염병. 1급은 발생 즉시 신고하고 음압격리합니다."},
+ {id:3, c1:"MMR 접종 전인 11개월 영아. 고열이 난 뒤 온몸에 발진이 생겼다.", c2:"발진은 귀 뒤에서 시작해 퍼졌고, 볼 안쪽 점막에 작은 흰 반점이 있다.",
+  name:"홍역", g:2, due:"24시간 이내", iso:"필요", sv:"전수", key:"귀 뒤에서 퍼지는 발진, 코플릭 반점",
+  tip:"같은 '발진 + 아이'라도 홍역은 2급. 전파력이 매우 강해 격리가 필요합니다."},
+ {id:4, c1:"68세 남성. 기침이 3주 넘게 계속되고 있다.", c2:"야간 발한과 6kg 체중 감소가 있고, 흉부 X선에서 공동이 보인다.",
+  name:"결핵", g:2, due:"24시간 이내", iso:"필요", sv:"전수", key:"3주 이상 기침, 체중 감소, 공동",
+  tip:"2급은 24시간 이내 신고, 격리가 필요한 감염병입니다."},
+ {id:6, c1:"고등학교 2학년 학생. 발열이 있고, 같은 반에 비슷한 증상의 학생이 2명 더 있다.", c2:"양쪽 귀밑 침샘이 부었다.",
+  name:"유행성이하선염", g:2, due:"24시간 이내", iso:"필요", sv:"전수", key:"귀밑 침샘 부종, 집단 발생",
+  tip:"MMR로 예방하는 홍역·유행성이하선염·풍진은 모두 2급이에요."},
+ {id:7, c1:"70대 여성. 고열과 두통이 있다. 10월에 밭에서 고구마를 수확했다.", c2:"겨드랑이에 검은 딱지(가피)가 있다.",
+  name:"쯔쯔가무시증", g:3, due:"24시간 이내", iso:"불필요", sv:"전수", key:"가을 농작업, 가피",
+  tip:"3급은 사람 사이 전파가 거의 없어 격리가 필요 없어요. 신고는 2급과 같이 24시간 이내."},
+ {id:8, c1:"60대 남성. 5월에 텃밭 작업을 한 뒤 고열, 구토, 설사가 생겼다.", c2:"진드기에 물린 자국이 있고, 혈액검사에서 혈소판이 크게 감소했다.",
+  name:"중증열성혈소판감소증후군(SFTS)", g:3, due:"24시간 이내", iso:"불필요", sv:"전수", key:"진드기, 혈소판 감소",
+  tip:"격리 대상은 아니지만 환자 혈액·체액을 통한 의료진 감염 사례가 있어 표준주의가 중요해요."},
+ {id:11, c1:"어린이집에 다니는 3세 아동. 발열과 입안 궤양이 있다.", c2:"손바닥과 발바닥에 작은 수포가 생겼다.",
+  name:"수족구병", g:4, due:"7일 이내", iso:"불필요(등원 자제 권고)", sv:"표본", key:"손·발·입 수포",
+  tip:"4급은 표본감시. 지정된 감시기관이 7일 이내 신고합니다."},
+ {id:12, c1:"30대 직장인. 갑자기 38℃ 이상 열이 나고 근육통과 기침이 있다.", c2:"때는 1월, 사무실에 비슷한 증상의 동료가 여럿 있다.",
+  name:"인플루엔자", g:4, due:"7일 이내", iso:"불필요", sv:"표본", key:"겨울, 급성 발열, 근육통",
+  tip:"표본감시는 환자 한 명 한 명보다 유행의 '추이'를 보려는 목적이에요."}
+];
+// 수업용 8장: 헷갈리는 짝이 이어지도록 배치
+const SETS = { short:[3,11,1,7,8,4,6,12] };
+const byId = id => CASES.find(c=>c.id===id);
+const GL = {1:"1급",2:"2급",3:"3급",4:"4급"};
+
+const $app = document.getElementById("app");
+let S = { view:"home", set:"short", i:0, step:0, ans:{} };
+// teacher step: 0 clue1, 1 clue2, 2 answer, (i===len) => summary
+// student step: 0 clue1 choose, 1 clue2 choose, 2 answer
+
+function setView(v){ S.view=v; S.i=0; S.step=0; S.ans={}; document.body.className = v==="teacher"?"T":v==="student"?"S":""; render(); }
+function list(){ return SETS[S.set].map(byId); }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function header(right){
+  return `<div class="bar"><div class="brand"><b>1339 상황실</b><span>법정감염병 판정</span></div><div class="row">${right||""}${S.view!=="home"?`<button class="ghost" data-act="home">처음으로</button>`:""}</div></div>`;
+}
+
+/* ---------- HOME ---------- */
+function home(){
+  return header() + `
+  <div class="panel fade" style="display:flex;flex-direction:column;gap:18px">
+    <div><div class="eyebrow">지역사회간호학3 · 6주차</div>
+    <h1>보건소 감염병 담당 간호사가 되어 신고를 판정합니다</h1></div>
+    <p class="muted" style="margin:0;max-width:62ch">단서를 보고 몇 급인지 휴대폰으로 고릅니다. 두 번째 단서를 본 뒤 판단을 바꿀 수 있고, 정답이 공개되면 내 판정이 맞았는지 바로 확인해요. 점수나 순위는 없습니다.</p>
+    <div class="choice">
+      <button data-act="teacher"><span class="eyebrow">강의실 화면</span><strong>교수자 화면</strong><span class="muted">프로젝터에 띄우고 단서와 정답을 차례로 공개해요.</span></button>
+      <button data-act="student"><span class="eyebrow">휴대폰 · 태블릿</span><strong>학생 참여</strong><span class="muted">급을 고르고 내 판정을 확인해요.</span></button>
+    </div>
+  </div>`;
+}
+
+/* ---------- TEACHER ---------- */
+let timer=null, tLeft=0;
+function startTimer(sec){ stopTimer(); tLeft=sec; tick(); timer=setInterval(()=>{tLeft--; tick(); if(tLeft<=0) stopTimer();},1000); }
+function stopTimer(){ if(timer){clearInterval(timer); timer=null;} }
+function tick(){ const el=document.getElementById("timer"); if(el){ el.textContent = tLeft>0? `00:${String(tLeft).padStart(2,"0")}` : "시간 종료"; el.classList.toggle("hot", tLeft<=3); } }
+
+function teacher(){
+  const L=list();
+  if(S.i===-1) return teacherIntro();
+  if(S.i>=L.length) return teacherSummary();
+  const c=L[S.i];
+  const right=`<span class="pill">${S.i+1} / ${L.length}</span>`;
+  let body = `<div class="case">
+    <div class="row" style="justify-content:space-between"><span class="caseno">CASE ${String(S.i+1).padStart(2,"0")}</span><span id="timer" class="timer" aria-live="polite"></span></div>
+    <div class="clue ${S.step===0?"new":""}"><small>단서 1</small><p>${esc(c.c1)}</p></div>
+    ${S.step>=1?`<div class="clue ${S.step===1?"new":""} fade"><small>단서 2</small><p>${esc(c.c2)}</p></div>`:""}
+    ${S.step<2?`<p class="q">${S.step===0?"몇 급일까요? 휴대폰에서 골라 주세요.":"단서가 하나 더 나왔어요. 판단을 바꿔도 됩니다."}</p>
+      <div class="legend">${[1,2,3,4].map(g=>`<span class="g${g}"><span class="chip">${GL[g]}</span></span>`).join("")}</div>`:""}
+    ${S.step===2?answerBlock(c):""}
+  </div>`;
+  const next = S.step===0?"단서 2 공개":S.step===1?"정답 공개":(S.i===L.length-1?"정리로":"다음 사례");
+  return header(right)+`<div class="panel stage">${body}</div>
+   <div class="ctrl"><button class="ghost" data-act="tprev">← 이전</button>
+   <span class="kbd">스페이스·→ 다음 / ← 이전</span>
+   <button class="primary" data-act="tnext">${next} →</button></div>`;
+}
+function answerBlock(c){
+  return `<div class="ans fade g${c.g}">
+    <div class="bigG">${GL[c.g]}<small>${c.sv}감시</small></div>
+    <div style="min-width:0"><p class="dname">${esc(c.name)}</p>
+      <dl class="facts">
+        <div><dt>신고기한</dt><dd>${c.due}</dd></div>
+        <div><dt>격리</dt><dd>${esc(c.iso)}</dd></div>
+        <div><dt>감시방식</dt><dd>${c.sv}감시</dd></div>
+        <div><dt>핵심 단서</dt><dd>${esc(c.key)}</dd></div>
+      </dl>
+      <div class="tip">${esc(c.tip)}</div></div>
+  </div>`;
+}
+function teacherIntro(){
+  const qr = STUDENT_URL ? `<div class="qr"><div id="qrbox" aria-label="학생 참여 QR 코드"></div>
+     <div style="display:flex;flex-direction:column;gap:8px;min-width:0"><h2>휴대폰 카메라로 QR을 찍어 주세요</h2>
+     <p class="muted" style="margin:0">열리면 '시작'을 누르고 기다려 주세요.</p>
+     <div class="linkbox">${esc(STUDENT_URL)}</div></div></div>`
+   : `<p class="muted">학생에게 이 페이지 링크를 공유하고 '학생 참여'를 누르게 해 주세요.</p>`;
+  return header()+`<div class="panel stage" style="display:flex;flex-direction:column;gap:22px">
+    <div><div class="eyebrow">시작 전 안내</div><h1>오늘 당신은 보건소 감염병 담당 간호사입니다</h1></div>
+    ${qr}
+    <ol style="margin:0;padding-left:1.2em;font-size:1.15rem;display:flex;flex-direction:column;gap:6px">
+      <li>단서 1을 보고 <b>몇 급</b>인지 고릅니다.</li>
+      <li>단서 2가 나오면 판단을 바꿀 수 있어요.</li>
+      <li>정답이 공개되면 <b>내 판정이 맞았는지</b> 휴대폰에서 확인합니다.</li></ol>
+    <div class="legend">${[1,2,3,4].map(g=>`<span class="g${g}"><span class="chip">${GL[g]}</span></span>`).join("")}</div>
+  </div>
+  <div class="ctrl"><span></span><button class="primary" data-act="tstart">사례 1 시작 →</button></div>`;
+}
+function teacherSummary(){
+  const L=list();
+  const rows=[1,2,3,4].map(g=>{ const cs=L.filter(c=>c.g===g); if(!cs.length) return "";
+    return `<tr class="g${g}"><td><span class="chip">${GL[g]}</span></td><td>${cs.map(c=>esc(c.name)).join(", ")}</td><td>${cs[0].due}</td><td>${cs[0].sv}</td></tr>`;}).join("");
+  return header(`<span class="pill">정리</span>`)+`<div class="panel stage" style="display:flex;flex-direction:column;gap:20px">
+    <div><div class="eyebrow">오늘 판정한 사례</div><h1>왜 1~3급은 전수감시, 4급만 표본감시일까요?</h1></div>
+    <div class="tblwrap"><table><thead><tr><th>급</th><th>사례</th><th>신고기한</th><th>감시</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="tip"><b>신고 의무자</b> 의사·치과의사·한의사, 의료기관의 장 &nbsp;·&nbsp; <b>신고 경로</b> 의료기관 → 관할 보건소 → 시·도 → 질병관리청</div>
+    <p class="hint" style="margin:0">급과 신고기한은 질병관리청 감염병포털 법정감염병 목록 기준이에요(2026년 10월 확인).</p>
+  </div>
+  <div class="ctrl"><button class="ghost" data-act="tprev">← 이전</button><button class="ghost" data-act="trestart">처음부터 다시</button></div>`;
+}
+function tNext(){ const L=list();
+  if(S.i===-1){ S.i=0; S.step=0; render(); startTimer(10); return; }
+  if(S.i>=L.length) return;
+  if(S.step<2){ S.step++; render(); if(S.step===1) startTimer(10); else stopTimer(); return; }
+  S.i++; S.step=0; render(); if(S.i<L.length) startTimer(10); }
+function tPrev(){ stopTimer(); const L=list();
+  if(S.i>=L.length){ S.i=L.length-1; S.step=2; return render(); }
+  if(S.step>0){ S.step--; return render(); }
+  if(S.i>0){ S.i--; S.step=2; return render(); }
+  S.i=-1; render(); }
+
+/* ---------- STUDENT ---------- */
+function student(){
+  const L=list();
+  if(S.i===-1) return header()+`<div class="panel fade" style="display:flex;flex-direction:column;gap:16px">
+     <div><div class="eyebrow">학생 참여</div><h1 style="font-size:1.7rem">보건소 감염병 담당 간호사로 신고 8건을 판정합니다</h1></div>
+     <p class="muted" style="margin:0">단서를 보고 급을 고르세요. 교수자가 다음 단서나 정답을 공개하면 버튼을 눌러 넘어갑니다.</p>
+     <button class="primary" data-act="sstart">시작</button></div>`;
+  if(S.i>=L.length) return studentEnd();
+  const c=L[S.i], a=S.ans[c.id]||{};
+  let body=`<div class="case">
+    <div class="row" style="justify-content:space-between"><span class="caseno">CASE ${String(S.i+1).padStart(2,"0")}</span><span class="pill">${S.i+1} / ${L.length}</span></div>
+    <div class="clue ${S.step===0?"new":""}"><small>단서 1</small><p>${esc(c.c1)}</p></div>
+    ${S.step>=1?`<div class="clue ${S.step===1?"new":""} fade"><small>단서 2</small><p>${esc(c.c2)}</p></div>`:""}`;
+  if(S.step<2){
+    const cur = S.step===0? a.first : a.final;
+    body+=`<p class="q" style="margin:0">${S.step===0?"몇 급일까요?":"판단을 바꿀까요? 다시 골라 주세요."}</p>
+      <div class="gbtns">${[1,2,3,4].map(g=>`<button class="g${g}" data-g="${g}" aria-pressed="${cur===g}">${GL[g]}</button>`).join("")}</div>
+      ${cur?`<div class="row" style="justify-content:space-between"><span class="hint">내 판정: <b>${GL[cur]}</b> · 바꾸려면 다시 누르세요</span>
+        <button class="primary" data-act="snext">${S.step===0?"단서 2 보기":"정답 보기"} →</button></div>`
+        :`<p class="hint" style="margin:0">교수자가 "${S.step===0?"단서 2":"정답"}"를 공개하면 다음으로 넘어가세요.</p>`}`;
+  } else {
+    const ok=a.final===c.g, okFirst=a.first===c.g;
+    body+=`<div class="result"><span class="mark ${ok?"ok":"no"}">${ok?"정답":"아쉬워요"}</span>
+      <span class="muted">처음 ${a.first?GL[a.first]:"-"} → 최종 ${a.final?GL[a.final]:"-"}</span>
+      ${!okFirst&&ok?`<span class="pill">단서 2로 바로잡음</span>`:""}</div>
+      ${answerBlock(c)}
+      <button class="primary" data-act="snext">${S.i===L.length-1?"내 판정 기록 보기":"다음 사례"} →</button>`;
+  }
+  return header()+`<div class="panel">${body}</div>`;
+}
+function studentEnd(){
+  const L=list(); const wrong=L.filter(c=>(S.ans[c.id]||{}).final!==c.g);
+  const fixed=L.filter(c=>{const a=S.ans[c.id]||{}; return a.first!==c.g && a.final===c.g;}).length;
+  return header()+`<div class="panel fade" style="display:flex;flex-direction:column;gap:16px">
+    <div><div class="eyebrow">판정 완료</div><h1 style="font-size:1.7rem">${wrong.length? `다시 볼 카드 ${wrong.length}장` : "모든 사례를 바르게 판정했어요"}</h1></div>
+    ${fixed?`<p class="muted" style="margin:0">두 번째 단서를 보고 판단을 바로잡은 카드가 ${fixed}장 있어요.</p>`:""}
+    <ul class="log">${L.map(c=>{const a=S.ans[c.id]||{}; const ok=a.final===c.g;
+      return `<li><span>${esc(c.name)} <span class="g${c.g}"><span class="chip">${GL[c.g]}</span></span></span><span class="mark ${ok?"ok":"no"}">${ok?"정답":"내 답 "+(a.final?GL[a.final]:"-")}</span></li>`}).join("")}</ul>
+    <div class="row">${wrong.length?`<button class="primary" data-act="sretry">틀린 카드만 다시</button>`:""}<button class="ghost" data-act="srestart">처음부터 다시</button></div>
+  </div>`;
+}
+let retryIds=null;
+
+/* ---------- render & events ---------- */
+function render(){
+  if(S.view==="teacher") $app.innerHTML=teacher();
+  else if(S.view==="student") $app.innerHTML=student();
+  else $app.innerHTML=home();
+  const box=document.getElementById("qrbox");
+  if(box && window.QRCode && STUDENT_URL){ try{ new QRCode(box,{text:STUDENT_URL,width:360,height:360,correctLevel:QRCode.CorrectLevel.M}); }catch(e){} }
+  if(S.view==="teacher") tick();
+}
+$app.addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if(b.dataset.set){ S.set=b.dataset.set; SETS.retry=null; return render(); }
+  if(b.dataset.g){ const g=+b.dataset.g; const c=list()[S.i]; const a=S.ans[c.id]||(S.ans[c.id]={});
+    if(S.step===0){ a.first=g; a.final=g; } else a.final=g; render(); return; }
+  const act=b.dataset.act;
+  if(act==="home"){ stopTimer(); return setView("home"); }
+  if(act==="teacher"){ setView("teacher"); S.i=-1; return render(); }
+  if(act==="student"){ setView("student"); S.i=-1; return render(); }
+  if(act==="tstart"||act==="tnext") return tNext();
+  if(act==="tprev") return tPrev();
+  if(act==="trestart"){ S.i=-1; S.step=0; return render(); }
+  if(act==="sstart"){ S.i=0; S.step=0; S.ans={}; return render(); }
+  if(act==="snext"){ if(S.step<2){ S.step++; } else { S.i++; S.step=0; } window.scrollTo(0,0); return render(); }
+  if(act==="sretry"){ const L=list(); const ids=L.filter(c=>(S.ans[c.id]||{}).final!==c.g).map(c=>c.id);
+    SETS.retry=ids; S.set="retry"; S.i=0; S.step=0; ids.forEach(id=>delete S.ans[id]); return render(); }
+  if(act==="srestart"){ if(S.set==="retry") S.set="short"; S.i=-1; S.step=0; S.ans={}; return render(); }
+});
+document.addEventListener("keydown",e=>{
+  if(S.view!=="teacher") return;
+  if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown"){ e.preventDefault(); tNext(); }
+  if(e.key==="ArrowLeft"||e.key==="PageUp"){ e.preventDefault(); tPrev(); }
+});
+
+function start(data){
+  const h=(location.hash||"").replace("#","");
+  if(data && data.view){ S=Object.assign(S,data); document.body.className=S.view==="teacher"?"T":S.view==="student"?"S":""; render(); return; }
+  if(h==="student"){ setView("student"); S.i=-1; render(); }
+  else if(h==="teacher"){ setView("teacher"); S.i=-1; render(); }
+  else render();
+}
+start({});
+window.addEventListener("hashchange",()=>{ start({}); });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>감염병 서바이벌 · 1·2·3급 매칭</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#0f1a24; --panel:#172634; --line:#26394b; --ink:#eef3f7; --mute:#8aa0b3;
+  --g1:#e5484d; --g2:#f5a524; --g3:#3e8ed0; --ok:#30a46c; --out:#4a5866;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer;border:0}
+.hidden{display:none!important}
+.banner{background:#3b2f0e;color:#ffd77a;font-size:13px;padding:6px 12px;text-align:center}
+
+/* ---------- 교수자 화면 ---------- */
+#teacher{display:flex;flex-direction:column;min-height:100vh}
+.t-top{display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--line)}
+.t-title{font-weight:800;font-size:20px;letter-spacing:-.3px}
+.t-title small{font-weight:500;color:var(--mute);margin-left:10px;font-size:14px}
+.count{font-size:22px;font-weight:800}
+.count b{color:var(--ok);font-size:34px}
+.t-main{flex:1;display:grid;grid-template-columns:minmax(380px,42%) 1fr;gap:0}
+.stage{padding:28px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+.board{padding:24px 28px;overflow:auto}
+.board h3{font-size:15px;color:var(--mute);font-weight:600;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.chip{position:relative;padding:12px 8px;border-radius:10px;text-align:center;font-weight:700;font-size:17px;background:#1f4d36;border:2px solid #2f7a53;transition:all .5s}
+.chip.out{background:transparent;border-color:var(--line);color:var(--out);text-decoration:line-through;font-weight:500}
+.chip.justout{background:#5a1f22;border-color:var(--g1);color:#ffb4b6;text-decoration:line-through}
+.chip.win{background:#5c4a12;border-color:#f5c542;color:#fff2c4;font-size:20px}
+.chip .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:#7ee2a8;display:none}
+.chip.answered .dot{display:block}
+.qr-box{background:#fff;border-radius:14px;padding:14px;align-self:center}
+.qr-box svg{display:block;width:260px;height:260px}
+.join-url{text-align:center;color:var(--mute);font-size:14px;word-break:break-all}
+.room{text-align:center;font-size:18px}
+.room b{font-size:40px;letter-spacing:6px;display:block}
+.settings{background:var(--panel);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.settings label{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.settings select{font:inherit;padding:4px 8px;border-radius:6px;background:#0f1a24;color:var(--ink);border:1px solid var(--line)}
+.btn{padding:14px 20px;border-radius:12px;font-weight:800;font-size:18px;background:var(--ok);color:#fff}
+.btn.sec{background:var(--panel);color:var(--ink);border:1px solid var(--line);font-weight:600;font-size:15px;padding:10px 14px}
+.btn:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.qno{color:var(--mute);font-size:16px}
+.disease{font-size:56px;font-weight:900;line-height:1.15;letter-spacing:-1px;word-break:keep-all;overflow-wrap:anywhere}
+.timer{height:14px;background:var(--panel);border-radius:8px;overflow:hidden}
+.timer i{display:block;height:100%;background:var(--g2);width:100%;transition:width .25s linear}
+.tnum{font-size:44px;font-weight:900;color:var(--g2)}
+.progress{font-size:18px;color:var(--mute)}
+.answer{font-size:64px;font-weight:900}
+.dist{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:70px 1fr 50px;align-items:center;gap:10px;font-weight:700}
+.bar .track{height:26px;background:var(--panel);border-radius:6px;overflow:hidden}
+.bar .fill{height:100%;border-radius:6px;transition:width .6s}
+.bar.correct{color:#7ee2a8}
+.tip{background:var(--panel);border-left:4px solid var(--g2);padding:10px 14px;border-radius:6px;font-size:16px;line-height:1.5}
+.result-msg{font-size:22px;font-weight:800}
+.final-title{font-size:40px;font-weight:900;color:#f5c542}
+
+/* ---------- 학생 화면 ---------- */
+#student{min-height:100vh;display:flex;flex-direction:column}
+.s-top{padding:12px 16px;display:flex;justify-content:space-between;color:var(--mute);font-size:14px;border-bottom:1px solid var(--line)}
+.s-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:22px;gap:18px;text-align:center}
+.s-body h1{font-size:26px}
+.s-body p{color:var(--mute);line-height:1.6}
+.s-input{font:inherit;font-size:22px;padding:14px;border-radius:12px;border:2px solid var(--line);background:var(--panel);color:var(--ink);text-align:center}
+.s-disease{font-size:34px;font-weight:900;word-break:keep-all;overflow-wrap:anywhere;line-height:1.2}
+.s-timer{font-size:20px;color:var(--g2);font-weight:800}
+.choices{display:flex;flex-direction:column;gap:12px}
+.choice{padding:22px;border-radius:16px;font-size:30px;font-weight:900;color:#fff}
+/* 색은 급이 아니라 버튼 위치에 따라 정해져요(옆 사람 화면 색으로 따라 하기 방지) */
+.choice.c0{background:#6b4bd6} .choice.c1{background:#1f8a86} .choice.c2{background:#c2577e}
+.choice.picked{outline:5px solid #fff}
+.choice:disabled:not(.picked){opacity:.25}
+.big{font-size:64px;font-weight:900}
+.alive{color:#7ee2a8} .dead{color:#ff8e91}
+.spect{font-size:13px;background:#2a2f36;color:#b5c0ca;border-radius:999px;padding:4px 10px;align-self:center}
+</style>
+</head>
+<body>
+<div id="modeBanner" class="banner hidden">체험 모드예요. Firebase 연결 전이라 같은 컴퓨터·같은 브라우저의 다른 탭끼리만 연결돼요.</div>
+
+<!-- ===== 교수자 ===== -->
+<div id="teacher" class="hidden">
+  <div class="t-top">
+    <div class="t-title">감염병 서바이벌 <small>1·2·3급 매칭</small></div>
+    <div class="count" id="tCount">참가 <b>0</b>명</div>
+  </div>
+  <div class="t-main">
+    <div class="stage" id="stage"></div>
+    <div class="board">
+      <h3 id="boardTitle">입장한 학생</h3>
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 학생 ===== -->
+<div id="student" class="hidden">
+  <div class="s-top"><span>감염병 서바이벌</span><span id="sName"></span></div>
+  <div class="s-body" id="sBody"></div>
+</div>
+
+<script>
+/* =====================================================================
+   1) Firebase 설정 — Firebase 콘솔에서 복사한 값을 아래에 붙여 넣으세요.
+      null이면 '체험 모드'(같은 브라우저 탭끼리만 연결)로 동작해요.
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyASJhNt0_jTCJYWhLctrgHNHcGWEmcz1JU",
+  authDomain: "chn3-survival.firebaseapp.com",
+  databaseURL: "https://chn3-survival-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chn3-survival",
+  storageBucket: "chn3-survival.firebasestorage.app",
+  messagingSenderId: "721618110630",
+  appId: "1:721618110630:web:243547f941742b644c0c67"
+};
+/* 예시)
+const FIREBASE_CONFIG = {
+  apiKey: "...",
+  authDomain: "....firebaseapp.com",
+  databaseURL: "https://...-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "...",
+  appId: "..."
+};
+*/
+
+/* =====================================================================
+   2) 문제 은행 — 법정감염병 제1~3급
+      · 감염병예방법 제2조 제2~4호 (법률 제21521호, 2026.10.8. 시행) 65종
+      · + 질병관리청장 지정 고시: 니파바이러스감염증(1급, 2025.9.8.), 엠폭스(3급, 2023.12.14.)
+      lv: 1 쉬움 → 3 어려움 (게임은 쉬운 문제부터 나와요)
+   ===================================================================== */
+const BANK = [
+ // ---- 쉬움
+ {n:"결핵",g:2,lv:1},{n:"홍역",g:2,lv:1},{n:"수두",g:2,lv:1},{n:"콜레라",g:2,lv:1},
+ {n:"에볼라바이러스병",g:1,lv:1},{n:"페스트",g:1,lv:1},{n:"두창",g:1,lv:1},{n:"탄저",g:1,lv:1},
+ {n:"중동호흡기증후군(MERS)",g:1,lv:1},{n:"중증급성호흡기증후군(SARS)",g:1,lv:1},
+ {n:"말라리아",g:3,lv:1},{n:"후천성면역결핍증(AIDS)",g:3,lv:1},{n:"일본뇌염",g:3,lv:1},
+ {n:"쯔쯔가무시증",g:3,lv:1},{n:"장티푸스",g:2,lv:1},{n:"세균성이질",g:2,lv:1},
+ {n:"A형간염",g:2,lv:1,tip:"A형간염은 2급, B형·C형간염은 3급이에요."},
+ {n:"B형간염",g:3,lv:1,tip:"A형·E형간염은 2급(장관 전파), B형·C형간염은 3급(혈액 전파)이에요."},
+ // ---- 보통
+ {n:"백일해",g:2,lv:2,tip:"DTaP 세 질환: 디프테리아 1급, 백일해 2급, 파상풍 3급."},
+ {n:"파상풍",g:3,lv:2,tip:"DTaP 세 질환: 디프테리아 1급, 백일해 2급, 파상풍 3급."},
+ {n:"유행성이하선염",g:2,lv:2},{n:"풍진",g:2,lv:2},{n:"폴리오",g:2,lv:2},{n:"성홍열",g:2,lv:2},
+ {n:"한센병",g:2,lv:2},{n:"파라티푸스",g:2,lv:2},{n:"장출혈성대장균감염증",g:2,lv:2},
+ {n:"C형간염",g:3,lv:2},{n:"신증후군출혈열",g:3,lv:2},{n:"비브리오패혈증",g:3,lv:2},
+ {n:"레지오넬라증",g:3,lv:2},{n:"뎅기열",g:3,lv:2},{n:"공수병",g:3,lv:2},{n:"매독",g:3,lv:2},
+ {n:"중증열성혈소판감소증후군(SFTS)",g:3,lv:2},{n:"지카바이러스 감염증",g:3,lv:2},{n:"황열",g:3,lv:2},
+ {n:"신종인플루엔자",g:1,lv:2},{n:"동물인플루엔자 인체감염증",g:1,lv:2},{n:"보툴리눔독소증",g:1,lv:2},
+ // ---- 어려움
+ {n:"디프테리아",g:1,lv:3,tip:"DTaP 세 질환 중 디프테리아만 1급이에요."},
+ {n:"E형간염",g:2,lv:3,tip:"E형간염은 A형간염처럼 2급이에요."},
+ {n:"엠폭스",g:3,lv:3,tip:"2023년 12월 2급에서 3급으로 조정됐어요(질병관리청장 고시)."},{n:"카바페넴내성장내세균목(CRE) 감염증",g:2,lv:3},
+ {n:"반코마이신내성황색포도알균(VRSA) 감염증",g:2,lv:3},
+ {n:"수막구균 감염증",g:2,lv:3},{n:"b형헤모필루스인플루엔자",g:2,lv:3},{n:"폐렴구균 감염증",g:2,lv:3},
+ {n:"야토병",g:1,lv:3},{n:"마버그열",g:1,lv:3},{n:"라싸열",g:1,lv:3},{n:"크리미안콩고출혈열",g:1,lv:3},
+ {n:"남아메리카출혈열",g:1,lv:3},{n:"니파바이러스감염증",g:1,lv:3,tip:"2025년 9월 질병관리청장 고시로 제1급에 지정됐어요."},{n:"리프트밸리열",g:1,lv:3},{n:"신종감염병증후군",g:1,lv:3},
+ {n:"발진티푸스",g:3,lv:3},{n:"발진열",g:3,lv:3},{n:"렙토스피라증",g:3,lv:3},{n:"브루셀라증",g:3,lv:3},
+ {n:"크로이츠펠트-야콥병(CJD) 및 변종크로이츠펠트-야콥병(vCJD)",g:3,lv:3},{n:"큐열",g:3,lv:3},{n:"웨스트나일열",g:3,lv:3},
+ {n:"라임병",g:3,lv:3},{n:"진드기매개뇌염",g:3,lv:3},{n:"유비저",g:3,lv:3},{n:"치쿤구니야열",g:3,lv:3},
+];
+const GCOLOR = {1:"var(--g1)",2:"var(--g2)",3:"var(--g3)"};
+
+/* =====================================================================
+   3) 동기화 계층 — Firebase 또는 체험 모드(BroadcastChannel)
+   ===================================================================== */
+const store = {
+  get(k){ try{return localStorage.getItem(k)}catch(e){return null} },
+  set(k,v){ try{localStorage.setItem(k,v)}catch(e){} }
+};
+// 학생 기기 식별값: 실제 운영은 localStorage(창을 닫았다 다시 열어도 유지),
+// 체험 모드는 탭마다 다른 학생이 되도록 sessionStorage 사용
+const pidStore = {
+  area(){ return FIREBASE_CONFIG ? localStorage : sessionStorage; },
+  get(k){ try{return this.area().getItem(k)}catch(e){return null} },
+  set(k,v){ try{this.area().setItem(k,v)}catch(e){} }
+};
+function loadScript(src){return new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s);});}
+
+function pathGet(obj, path){ return path.split('/').filter(Boolean).reduce((o,k)=>o==null?undefined:o[k], obj); }
+function pathSet(obj, path, val){
+  const ks=path.split('/').filter(Boolean); let o=obj;
+  for(let i=0;i<ks.length-1;i++){ if(typeof o[ks[i]]!=='object'||o[ks[i]]===null) o[ks[i]]={}; o=o[ks[i]]; }
+  if(val===null||val===undefined) delete o[ks[ks.length-1]]; else o[ks[ks.length-1]]=val;
+}
+
+let DB;
+async function initDB(){
+  if(FIREBASE_CONFIG){
+    await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+    await loadScript("https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js");
+    firebase.initializeApp(FIREBASE_CONFIG);
+    const fdb = firebase.database();
+    DB = {
+      set:(p,v)=>fdb.ref(p).set(v),
+      update:(p,v)=>fdb.ref(p).update(v),
+      get:async p=>(await fdb.ref(p).get()).val(),
+      on:(p,cb)=>{const r=fdb.ref(p);const h=s=>cb(s.val());r.on('value',h);return()=>r.off('value',h);}
+    };
+  } else {
+    document.getElementById('modeBanner').classList.remove('hidden');
+    const KEY='survival-mockdb'; const bc=('BroadcastChannel' in window)?new BroadcastChannel('survival'):null;
+    const listeners=[];
+    const read=()=>{try{return JSON.parse(store.get(KEY)||'{}')}catch(e){return{}}};
+    const fire=()=>{const t=read(); listeners.forEach(l=>l.cb(JSON.parse(JSON.stringify(pathGet(t,l.p)??null))));};
+    const write=fn=>{const t=read(); fn(t); store.set(KEY,JSON.stringify(t)); bc&&bc.postMessage(1); fire();};
+    bc&&(bc.onmessage=fire);
+    window.addEventListener('storage',e=>{if(e.key===KEY)fire();});
+    DB = {
+      set:async(p,v)=>write(t=>pathSet(t,p,JSON.parse(JSON.stringify(v)))),
+      update:async(p,v)=>write(t=>{for(const k in v) pathSet(t,p+'/'+k,v[k]);}),
+      get:async p=>JSON.parse(JSON.stringify(pathGet(read(),p)??null)),
+      on:(p,cb)=>{const l={p,cb};listeners.push(l);setTimeout(()=>cb(pathGet(read(),p)??null));return()=>listeners.splice(listeners.indexOf(l),1);}
+    };
+  }
+}
+
+/* =====================================================================
+   공통 유틸
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const params=new URLSearchParams(location.search);
+const ROOM_PARAM=params.get('room');
+
+/* =====================================================================
+   교수자 화면
+   ===================================================================== */
+const T = { room:null, state:null, players:{}, answers:{}, timerInt:null, closing:false };
+
+async function startTeacher(){
+  $('#teacher').classList.remove('hidden');
+  T.room = store.get('survival-teacher-room');
+  if(!T.room || !(await DB.get('rooms/'+T.room+'/state'))) await newRoom();
+  DB.on('rooms/'+T.room+'/state', s=>{ T.state=s; renderTeacher(); });
+  DB.on('rooms/'+T.room+'/players', p=>{ T.players=p||{}; renderBoard(); renderProgress(); });
+}
+
+async function newRoom(){
+  T.room = String(Math.floor(1000+Math.random()*9000));
+  store.set('survival-teacher-room', T.room);
+  await DB.set('rooms/'+T.room, { state:{ phase:'lobby', round:0, time:10, target:6, createdAt:Date.now() } });
+}
+
+function joinURL(){ return location.origin+location.pathname+'?room='+T.room; }
+
+function renderTeacher(){
+  const s=T.state; if(!s) return;
+  clearInterval(T.timerInt);
+  const st=$('#stage');
+  if(s.phase==='lobby'){
+    const qr=qrcode(0,'M'); qr.addData(joinURL()); qr.make();
+    st.innerHTML=`
+      <div class="room">방 코드<b>${T.room}</b></div>
+      <div class="qr-box">${qr.createSvgTag({cellSize:6,margin:2,scalable:true})}</div>
+      <div class="join-url">${esc(joinURL())}</div>
+      <div class="settings">
+        <label>제한 시간
+          <select id="setTime">${[5,7,10,15,20].map(v=>`<option value="${v}" ${v==s.time?'selected':''}>${v}초</option>`).join('')}</select></label>
+        <label>종료 인원 (이하로 남으면 끝)
+          <select id="setTarget">${[1,3,5,6,8,10].map(v=>`<option value="${v}" ${v==s.target?'selected':''}>${v}명</option>`).join('')}</select></label>
+      </div>
+      <div class="row">
+        <button class="btn" id="btnStart" style="flex:1">게임 시작</button>
+        <button class="btn sec" id="btnNew">새 방 만들기</button>
+      </div>`;
+    $('#setTime').onchange=e=>DB.update('rooms/'+T.room+'/state',{time:+e.target.value});
+    $('#setTarget').onchange=e=>DB.update('rooms/'+T.room+'/state',{target:+e.target.value});
+    $('#btnStart').onclick=startGame;
+    $('#btnNew').onclick=async()=>{ if(confirmNew()){ await newRoom(); location.reload(); } };
+  }
+  else if(s.phase==='question'){
+    const q=BANK[s.order[s.qi]];
+    st.innerHTML=`
+      <div class="qno">${s.round}번째 문제</div>
+      <div class="disease">${esc(q.n)}</div>
+      <div class="row" style="align-items:center;gap:16px"><div class="tnum" id="tNum">${s.time}</div>
+        <div class="progress" id="tProg"></div></div>
+      <div class="timer"><i id="tBar"></i></div>
+      <div class="row"><button class="btn sec" id="btnClose">지금 마감</button></div>`;
+    $('#btnClose').onclick=closeQuestion;
+    renderProgress();
+    const tick=()=>{
+      const left=Math.max(0,(s.deadline-Date.now())/1000);
+      $('#tNum').textContent=Math.ceil(left);
+      $('#tBar').style.width=(left/s.time*100)+'%';
+      if(left<=0) closeQuestion();
+    };
+    tick(); T.timerInt=setInterval(tick,200);
+  }
+  else if(s.phase==='reveal'){
+    const q=BANK[s.order[s.qi]]; const r=s.result||{};
+    const tot=(r.c1||0)+(r.c2||0)+(r.c3||0)+(r.none||0)||1;
+    const bar=(g,label,c)=>`<div class="bar ${g==q.g?'correct':''}"><span>${label}</span>
+      <div class="track"><div class="fill" style="width:${c/tot*100}%;background:${g?GCOLOR[g]:'var(--out)'}"></div></div><span>${c}</span></div>`;
+    let msg;
+    if(r.voided) msg=`<div class="result-msg" style="color:var(--g2)">전원 오답 → 이 문제는 무효! 모두 생존해요.</div>`;
+    else msg=`<div class="result-msg">탈락 <span style="color:#ff8e91">${r.outCount}명</span> · 생존 <span style="color:#7ee2a8">${r.survivors}명</span></div>`;
+    const ended = !r.voided && r.survivors<=s.target;
+    st.innerHTML=`
+      <div class="qno">${s.round}번째 문제 · 정답</div>
+      <div class="disease" style="font-size:40px">${esc(q.n)}</div>
+      <div class="answer" style="color:${GCOLOR[q.g]}">제${q.g}급</div>
+      ${q.tip?`<div class="tip">${esc(q.tip)}</div>`:''}
+      <div class="dist">${bar(1,'1급',r.c1||0)}${bar(2,'2급',r.c2||0)}${bar(3,'3급',r.c3||0)}${bar(0,'미응답',r.none||0)}</div>
+      ${msg}
+      <div class="row">${ended
+        ? `<button class="btn" id="btnEnd" style="flex:1">최종 생존자 발표</button>`
+        : `<button class="btn" id="btnNext" style="flex:1">다음 문제</button><button class="btn sec" id="btnStop">여기서 종료</button>`}</div>`;
+    if(ended) $('#btnEnd').onclick=endGame;
+    else { $('#btnNext').onclick=nextQuestion; $('#btnStop').onclick=()=>{ if(confirm('지금 남은 학생을 최종 생존자로 하고 끝낼까요?')) endGame(); }; }
+  }
+  else if(s.phase==='end'){
+    const winners=Object.values(T.players).filter(p=>p.alive);
+    st.innerHTML=`
+      <div class="final-title">최종 생존자 ${winners.length}명</div>
+      <div style="font-size:30px;font-weight:800;line-height:1.6">${winners.map(p=>esc(p.name)).join(' · ')||'-'}</div>
+      <div class="qno">${s.round}문제 진행</div>
+      <div class="row"><button class="btn sec" id="btnNew2">새 게임(새 방)</button></div>`;
+    $('#btnNew2').onclick=async()=>{ if(confirmNew()){ await newRoom(); location.reload(); } };
+  }
+  renderBoard();
+}
+function confirmNew(){ return confirm('새 방을 만들면 지금 방의 학생들은 다시 QR로 들어와야 해요. 진행할까요?'); }
+
+function renderBoard(){
+  const s=T.state; if(!s) return;
+  const list=Object.entries(T.players).sort((a,b)=>a[1].joinedAt-b[1].joinedAt);
+  const alive=list.filter(([,p])=>p.alive).length;
+  $('#tCount').innerHTML = s.phase==='lobby' ? `참가 <b>${list.length}</b>명` : `생존 <b>${alive}</b> / ${list.filter(([,p])=>!p.late).length}명`;
+  $('#boardTitle').textContent = s.phase==='lobby' ? '입장한 학생' : s.phase==='end' ? '최종 결과' : '생존 현황 (초록 = 생존)';
+  // 생존자 먼저, 탈락자는 뒤로
+  const sorted = s.phase==='lobby' ? list : list.slice().sort((a,b)=>(b[1].alive-a[1].alive)||(a[1].joinedAt-b[1].joinedAt));
+  $('#grid').innerHTML = sorted.map(([id,p])=>{
+    let cls='chip';
+    if(!p.alive) cls+= (s.phase==='reveal' && p.outRound===s.round) ? ' justout' : ' out';
+    else if(s.phase==='end') cls+=' win';
+    if(s.phase==='question' && p.alive && T.answers[id]) cls+=' answered';
+    return `<div class="${cls}"><span class="dot"></span>${esc(p.name)}</div>`;
+  }).join('');
+}
+function renderProgress(){
+  const s=T.state; const el=$('#tProg'); if(!s||s.phase!=='question'||!el) return;
+  const alive=Object.entries(T.players).filter(([,p])=>p.alive);
+  const n=alive.filter(([id])=>T.answers[id]).length;
+  el.textContent=`응답 ${n} / ${alive.length}명`;
+}
+
+let ansOff=null;
+function watchAnswers(round){
+  ansOff&&ansOff(); T.answers={};
+  ansOff=DB.on('rooms/'+T.room+'/answers/'+round, a=>{ T.answers=a||{}; renderBoard(); renderProgress(); });
+}
+
+async function startGame(){
+  const alive=Object.keys(T.players).length;
+  if(alive<1){ alert('아직 입장한 학생이 없어요.'); return; }
+  const order=[1,2,3].flatMap(lv=>shuffle(BANK.map((q,i)=>[q,i]).filter(([q])=>q.lv===lv).map(([,i])=>i)));
+  await DB.update('rooms/'+T.room+'/state',{order, qi:-1, round:0});
+  T.state.order=order; T.state.qi=-1; T.state.round=0;
+  nextQuestion();
+}
+async function nextQuestion(){
+  const s=T.state; const qi=s.qi+1;
+  if(qi>=s.order.length){ alert('준비된 문제를 모두 사용했어요. 여기서 종료할게요.'); endGame(); return; }
+  const round=s.round+1; T.closing=false;
+  watchAnswers(round);
+  await DB.update('rooms/'+T.room+'/state',{phase:'question', qi, round, deadline:Date.now()+s.time*1000, seed:Math.random(), result:null});
+}
+async function closeQuestion(){
+  if(T.closing) return; T.closing=true; clearInterval(T.timerInt);
+  const s=T.state; const q=BANK[s.order[s.qi]];
+  await new Promise(r=>setTimeout(r,600)); // 마지막 응답 도착 대기
+  const answers=(await DB.get('rooms/'+T.room+'/answers/'+s.round))||{};
+  const alive=Object.entries(T.players).filter(([,p])=>p.alive);
+  const r={c1:0,c2:0,c3:0,none:0};
+  const wrong=[];
+  alive.forEach(([id])=>{ const a=answers[id]; if(a) r['c'+a]++; else r.none++; if(a!==q.g) wrong.push(id); });
+  const survivors=alive.length-wrong.length;
+  if(survivors===0 && alive.length>0){ r.voided=true; r.survivors=alive.length; r.outCount=0; }
+  else {
+    r.voided=false; r.survivors=survivors; r.outCount=wrong.length;
+    const upd={}; wrong.forEach(id=>{ upd[id+'/alive']=false; upd[id+'/outRound']=s.round; });
+    if(wrong.length) await DB.update('rooms/'+T.room+'/players', upd);
+  }
+  await DB.update('rooms/'+T.room+'/state',{phase:'reveal', result:r});
+}
+async function endGame(){ await DB.update('rooms/'+T.room+'/state',{phase:'end'}); }
+
+/* =====================================================================
+   학생 화면
+   ===================================================================== */
+const S = { room:ROOM_PARAM, id:null, me:null, state:null, picked:null, pickedRound:null, tInt:null, qStart:0 };
+
+async function startStudent(){
+  $('#student').classList.remove('hidden');
+  const st=await DB.get('rooms/'+S.room+'/state');
+  if(!st){ $('#sBody').innerHTML=`<h1>방을 찾을 수 없어요</h1><p>QR을 다시 찍거나 교수님 화면의 방 코드를 확인해 주세요.</p>`; return; }
+  S.id=pidStore.get('survival-pid-'+S.room);
+  if(S.id && await DB.get('rooms/'+S.room+'/players/'+S.id)) listenStudent();
+  else renderJoin();
+}
+function renderJoin(){
+  $('#sBody').innerHTML=`
+    <h1>실명을 입력하세요</h1>
+    <p>교수님 화면에 이름이 표시돼요.</p>
+    <input class="s-input" id="nameIn" maxlength="10" placeholder="홍길동" autocomplete="off">
+    <button class="btn" id="joinBtn">입장하기</button>`;
+  const go=async()=>{
+    const name=$('#nameIn').value.trim(); if(!name) return $('#nameIn').focus();
+    $('#joinBtn').disabled=true;
+    const st=await DB.get('rooms/'+S.room+'/state');
+    const late = st && st.phase!=='lobby';
+    S.id='p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+    await DB.set('rooms/'+S.room+'/players/'+S.id,{name, alive:!late, late:!!late, joinedAt:Date.now(), outRound:late?0:null});
+    pidStore.set('survival-pid-'+S.room,S.id);
+    listenStudent();
+  };
+  $('#joinBtn').onclick=go; $('#nameIn').onkeydown=e=>{ if(e.key==='Enter') go(); };
+}
+function listenStudent(){
+  DB.on('rooms/'+S.room+'/players/'+S.id, p=>{ S.me=p; if(p) $('#sName').textContent=p.name; renderStudent(); });
+  DB.on('rooms/'+S.room+'/state', s=>{
+    if(s && s.phase==='question' && (!S.state || S.state.round!==s.round || S.state.phase!=='question')) S.qStart=Date.now();
+    S.state=s; renderStudent();
+  });
+}
+function renderStudent(){
+  const s=S.state, me=S.me, b=$('#sBody'); if(!s||!me) return;
+  clearInterval(S.tInt);
+  const spect = !me.alive;
+  const tag = spect ? `<div class="spect">${me.late?'관전 중 (게임 시작 후 입장)':'탈락 · 연습으로 계속 풀 수 있어요'}</div>` : '';
+  if(s.phase==='lobby'){
+    b.innerHTML=`<div class="big">✅</div><h1>${esc(me.name)} 님, 입장 완료</h1><p>교수님이 시작하면 문제가 나와요.<br>화면을 켜 둔 채 기다려 주세요.</p>`;
+  }
+  else if(s.phase==='question'){
+    const q=BANK[s.order[s.qi]];
+    const done = S.pickedRound===s.round;
+    // 학생마다 버튼 순서를 다르게
+    let seed=0; for(const c of S.id+s.round) seed=(seed*31+c.charCodeAt(0))>>>0;
+    const order=[1,2,3].sort((a,b)=>(((seed>>a)&7)-((seed>>b)&7))||a-b);
+    b.innerHTML=`${tag}
+      <div class="qno" style="color:var(--mute)">${s.round}번째 문제</div>
+      <div class="s-disease">${esc(q.n)}</div>
+      <div class="s-timer" id="sT"></div>
+      <div class="choices">${order.map((g,idx)=>`<button class="choice c${idx} ${done&&S.picked===g?'picked':''}" data-g="${g}" ${done?'disabled':''}>제${g}급</button>`).join('')}</div>
+      <p id="sMsg">${done?'제출 완료! 정답 공개를 기다리세요.':''}</p>`;
+    b.querySelectorAll('.choice').forEach(btn=>btn.onclick=async()=>{
+      const g=+btn.dataset.g; S.picked=g; S.pickedRound=s.round;
+      b.querySelectorAll('.choice').forEach(x=>{x.disabled=true; x.classList.toggle('picked',x===btn);});
+      $('#sMsg').textContent='제출 완료! 정답 공개를 기다리세요.';
+      if(me.alive) await DB.set('rooms/'+S.room+'/answers/'+s.round+'/'+S.id, g);
+    });
+    const tick=()=>{ const left=Math.max(0,s.time-(Date.now()-S.qStart)/1000); const el=$('#sT'); if(el) el.textContent=left>0?`남은 시간 ${Math.ceil(left)}초`:'마감!';
+      if(left<=0 && S.pickedRound!==s.round){ b.querySelectorAll('.choice').forEach(x=>x.disabled=true); } };
+    tick(); S.tInt=setInterval(tick,250);
+  }
+  else if(s.phase==='reveal'){
+    const q=BANK[s.order[s.qi]]; const r=s.result||{};
+    const mine = S.pickedRound===s.round ? S.picked : null;
+    let head;
+    if(r.voided && !me.late && (me.alive)) head=`<div class="big" style="color:var(--g2)">무효!</div><h1>전원 오답이라 모두 생존해요</h1>`;
+    else if(me.alive) head=`<div class="big alive">생존!</div><h1>다음 문제를 기다리세요</h1>`;
+    else if(me.outRound===s.round) head=`<div class="big dead">OUT</div><h1>아쉽게 탈락했어요</h1><p>다음 문제부터는 연습으로 계속 풀 수 있어요.</p>`;
+    else head=`${tag}<h1>${mine===q.g?'⭕ 맞혔어요':'❌ 틀렸어요'}</h1>`;
+    b.innerHTML=`${head}
+      <p style="font-size:20px;color:var(--ink)">${esc(q.n)} → <b style="color:${GCOLOR[q.g]}">제${q.g}급</b></p>
+      ${mine?`<p>내 답: 제${mine}급</p>`:`<p>응답하지 않았어요</p>`}
+      ${q.tip?`<p style="font-size:15px">${esc(q.tip)}</p>`:''}`;
+  }
+  else if(s.phase==='end'){
+    b.innerHTML = me.alive
+      ? `<div class="big">🏆</div><h1 style="color:#f5c542">최종 생존!</h1><p>${s.round}문제를 끝까지 버텼어요.</p>`
+      : `<div class="big">👏</div><h1>게임 종료</h1><p>최종 생존자는 교수님 화면에서 확인하세요.</p>`;
+  }
+}
+
+/* ===================================================================== */
+(async()=>{
+  await initDB();
+  if(ROOM_PARAM) startStudent(); else startTeacher();
+})();
+</script>
+</body>
+</html>

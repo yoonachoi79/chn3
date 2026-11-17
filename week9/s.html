@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>보건교사의 하루 · 참여</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 학생 휴대폰 한 손 화면: 위 = 시각 띠, 아래 = 상황 요약과 큰 선택 버튼 */
+:root{
+  --paper:#F4F6F3; --card:#FFFFFF; --ink:#1D2A31; --muted:#5C6B70; --line:#D3DCD8;
+  --teal:#0F6767; --teal-soft:#E1EFEC; --alert:#C2412D; --alert-soft:#FBE7E2;
+  --amber:#A86B12; --amber-soft:#FBF0DC; --ok:#2C7A4B; --ok-soft:#E2F2E8;
+  --f-display:"Do Hyeon","Noto Sans KR",system-ui,sans-serif;
+  --f-body:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;line-height:1.25;text-wrap:balance}
+.top{position:sticky;top:0;z-index:2;background:var(--ink);color:#fff;display:flex;justify-content:space-between;align-items:center;padding:10px 16px}
+.top b{font-family:var(--f-display);font-weight:400;font-size:26px;font-variant-numeric:tabular-nums}
+.top span{font-size:13px;opacity:.8}
+.wrap{max-width:560px;margin:0 auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-left:6px solid var(--teal);border-radius:12px;padding:14px 16px}
+.card.amber{border-left-color:var(--amber)}
+.meta{color:var(--muted);font-size:13px}
+.card h2{font-size:26px;margin:.15em 0 .3em}
+.card p{margin:0 0 .6em;font-size:15px}
+.quote{color:var(--muted);font-style:italic}
+.facts{display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0;list-style:none}
+.facts li{background:var(--teal-soft);color:var(--teal);border-radius:999px;padding:.1em .7em;font-size:13px;font-weight:500}
+.facts li.flag{background:var(--alert-soft);color:var(--alert)}
+.q{font-size:22px}
+.stepno{font-family:var(--f-display);color:var(--amber);font-size:17px}
+.alist{list-style:none;margin:0;padding:10px 12px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.opts{display:grid;gap:10px}
+.opt{display:grid;grid-template-columns:36px 1fr;gap:10px;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px;align-items:start;min-height:56px}
+.opt .k{font-family:var(--f-display);font-size:20px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--paper);line-height:1}
+.opt.sel{border-color:var(--teal);background:var(--teal-soft)}
+.opt.sel .k{background:var(--teal);color:#fff}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.right .k{background:var(--ok);color:#fff}
+.opt.wrong{border-color:var(--alert);background:var(--alert-soft)}
+.opt.wrong .k{background:var(--alert);color:#fff}
+.opt.faded{opacity:.5}
+.opt:disabled{cursor:default}
+.why{display:block;margin-top:4px;font-size:14px;color:var(--alert)}
+.hint{color:var(--muted);font-size:13px;text-align:center}
+.verdict{border-radius:12px;padding:12px 14px;font-weight:700;font-size:18px}
+.verdict.ok{background:var(--ok-soft);color:var(--ok)}
+.verdict.no{background:var(--alert-soft);color:var(--alert)}
+.verdict.none{background:var(--line);color:var(--muted)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px}
+.box h4{margin:0 0 4px;font-size:13px;color:var(--muted);font-weight:500}
+.box ol{margin:0;padding-left:1.2em}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{border:1px solid var(--teal);color:var(--teal);border-radius:6px;padding:0 .5em;font-size:12px;font-weight:500}
+.tiles{display:grid;gap:10px}
+.tile{position:relative;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:12px 12px 12px 56px;min-height:72px}
+.tile .tag{font-size:12px;color:var(--muted)}
+.tile h3{font-size:19px}
+.tile p{margin:0;font-size:14px}
+.tile .rk{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:2px dashed var(--line);display:grid;place-items:center;font-family:var(--f-display);font-size:20px;color:var(--muted)}
+.tile.on{border-color:var(--teal)}
+.tile.on .rk{border:0;background:var(--teal);color:#fff}
+.again{align-self:center;background:none;border:1px solid var(--line);border-radius:8px;padding:6px 16px;background:var(--card)}
+.order{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.order li{display:grid;grid-template-columns:4.2em 1fr;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:15px}
+.order li b{font-family:var(--f-display);font-weight:400;font-size:18px}
+.order li.r1 b{color:var(--alert)}.order li.r2 b{color:var(--amber)}.order li.r3 b{color:var(--teal)}
+.wait{text-align:center;padding:40px 10px}
+.wait h1{font-size:34px;color:var(--teal);margin-bottom:.4em}
+.wait p{color:var(--muted)}
+.mode{font-size:12px;background:var(--amber-soft);color:#6B4408;border-radius:6px;padding:.2em .6em;align-self:center}
+.codeform{display:flex;gap:8px}
+.codeform input{flex:1;border:2px solid var(--line);border-radius:10px;padding:10px;font-size:18px;text-transform:uppercase}
+.codeform button{background:var(--teal);color:#fff;border:0;border-radius:10px;padding:0 18px}
+.log{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.log li{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+.log li b{font-family:var(--f-display);font-weight:400;font-size:17px}
+.log .m{font-weight:700}
+.log .m.ok{color:var(--ok)}.log .m.no{color:var(--alert)}.log .m.none{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top"><b id="clock">--:--</b><span id="label">보건교사의 하루</span></div>
+<div class="wrap" id="app"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script src="store.js"></script>
+<script>
+const K=['A','B','C'];
+const $=s=>document.querySelector(s);
+const chips=a=>`<div class="chips">${a.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>`;
+const room=(new URLSearchParams(location.search).get('r')||'').trim();
+let sid=null;
+try{ sid=sessionStorage.getItem('w9-sid'); }catch(e){}
+if(!sid){ sid=Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4); try{ sessionStorage.setItem('w9-sid',sid); }catch(e){} }
+
+const st={state:null, revealed:{}, mine:{}, picking:[]};
+const base='rooms/'+room;
+
+function start(){
+  Store.on(base+'/members/'+sid, v=>{ if(!v) Store.set(base+'/members/'+sid, Store.stamp()); });
+  Store.on(base+'/state', v=>{ const prev=st.state&&st.state.scene+'-'+st.state.step; st.state=v; if(!v||prev!==v.scene+'-'+v.step) st.picking=[]; render(); if(!v||prev!==(v&&v.scene+'-'+v.step)) window.scrollTo(0,0); });
+  Store.on(base+'/revealed', v=>{ st.revealed=v||{}; render(); });
+  allQs().forEach(q=>Store.on(base+'/answers/'+q.qid+'/'+sid, v=>{ st.mine[q.qid]=v; render(); }));
+}
+const answer=(qid,v)=>Store.set(base+'/answers/'+qid+'/'+sid, v);
+
+function codeForm(){
+  return `<div class="wait"><h1>보건교사의 하루</h1><p>선생님 화면의 QR코드로 들어오거나, 화면 아래 주소의 r= 뒤 코드를 입력하세요.</p></div>
+    <form class="codeform" id="cf"><input id="code" placeholder="예: w9A1117" aria-label="참여 코드"><button>입장</button></form>`;
+}
+
+function optsHTML(qid, options){
+  const mine=st.mine[qid], rev=!!st.revealed[qid];
+  return options.map((o,j)=>{
+    let cls='';
+    if(rev) cls=o.ok?'right':(mine===j?'wrong':'faded');
+    else if(mine===j) cls='sel';
+    return `<button class="opt ${cls}" data-a="${j}" ${rev?'disabled':''}><span class="k">${K[j]}</span><span>${esc(o.t)}${rev&&mine===j&&o.why?`<span class="why">${esc(o.why)}</span>`:''}</span></button>`;
+  }).join('');
+}
+function verdict(qid, isOk){
+  if(!st.revealed[qid]) return `<p class="hint">${st.mine[qid]==null?'답을 골라 주세요.':'답을 바꿀 수 있어요. 선생님이 정답을 공개하면 결과가 나와요.'}</p>`;
+  const m=st.mine[qid];
+  if(m==null) return `<div class="verdict none">이번 문제는 응답하지 않았어요.</div>`;
+  return isOk(m)?`<div class="verdict ok">정답이에요!</div>`:`<div class="verdict no">아쉬워요. 정답을 확인해 보세요.</div>`;
+}
+
+function single(s){
+  const rev=!!st.revealed[s.id];
+  return `<div class="card"><div class="meta">${s.meta.map(esc).join(' · ')}</div><h2>${esc(s.title)}</h2><p>${esc(s.story)}</p>${s.quote?`<p class="quote">${esc(s.quote)}</p>`:''}<ul class="facts">${s.facts.map(f=>`<li class="${f[1]?'flag':''}">${esc(f[0])}</li>`).join('')}</ul></div>
+    <h3 class="q">지금 가장 먼저 할 일은?</h3>
+    <div class="opts">${optsHTML(s.id, s.options)}</div>
+    ${verdict(s.id, m=>s.options[m]&&s.options[m].ok)}
+    ${rev?`<div class="box"><h4>핵심 대응</h4><ol>${s.steps.map(x=>`<li>${esc(x)}</li>`).join('')}</ol>${chips(s.concepts)}</div>`:''}`;
+}
+
+function plan(s, n){
+  const step=s.steps[n], qid='plan'+n, rev=!!st.revealed[qid];
+  return `<div class="card amber"><div class="meta">카드 7 · 방과 후 · 학교 전체 자료 (가상)</div><ul class="facts">${s.data.map(d=>`<li class="flag">${esc(d[0])}${d[1]?` (${esc(d[1])})`:''}</li>`).join('')}</ul></div>
+    <div class="stepno">간호계획 ${n+1} / 5 · ${step.name}</div>
+    <h3 class="q">${esc(step.q)}</h3>
+    ${step.list?`<ul class="alist">${step.list.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+    <div class="opts">${optsHTML(qid, step.options)}</div>
+    ${verdict(qid, m=>step.options[m]&&step.options[m].ok)}
+    ${rev?`<div class="box">${esc(step.note)}${chips(step.concepts)}</div>`:''}`;
+}
+
+function triage(s){
+  const qid=s.id, rev=!!st.revealed[qid], mine=st.mine[qid];
+  const byK=Object.fromEntries(s.cards.map(c=>[c.k,c]));
+  if(rev){
+    const my=typeof mine==='string'?mine.split(','):null;
+    return `<h2 style="font-size:24px">12:20 우선순위 정답</h2>
+      ${verdict(qid, m=>m===s.order.join(','))}
+      <ul class="order">${s.order.map((k,j)=>`<li class="r${j+1}"><b>${j+1}순위</b><span>${esc(s.res[k].name)} <small>(${['생명 위협','집단 전파 차단','개인 불편'][j]})</small>${my?`<br><small>내가 놓은 자리: ${my.indexOf(k)+1}순위</small>`:''}</span></li>`).join('')}</ul>
+      <div class="box">두 명이 함께 왔어도, 숨쉬기 힘든 한 명이 먼저입니다.</div>`;
+  }
+  const order = typeof mine==='string'?mine.split(','):st.picking;
+  const done = typeof mine==='string';
+  return `<h2 style="font-size:24px">12:20 세 명이 동시에 들어왔다</h2>
+    <p class="hint" style="text-align:left;margin:0">먼저 볼 학생부터 차례로 누르세요.</p>
+    <div class="tiles">${s.cards.map(c=>{const r=order.indexOf(c.k);return `<button class="tile ${r>-1?'on':''}" data-t="${c.k}" ${done?'disabled':''}><span class="rk">${r>-1?r+1:''}</span><span class="tag">${esc(c.tag)}</span><h3>${esc(c.title)}</h3><p>${esc(c.body)}</p></button>`;}).join('')}</div>
+    ${done?`<p class="hint">제출했어요. 선생님이 정답을 공개하면 결과가 나와요.</p>`:''}
+    ${order.length?`<button class="again" data-again>다시 고르기</button>`:''}`;
+}
+
+function myLog(){
+  const items=allQs().map(q=>{
+    const m=st.mine[q.qid];
+    let mine, ok, right;
+    if(q.kind==='triage'){ const names=k=>q.scene.res[k].name;
+      right=q.scene.order.map(names).join(' → ');
+      mine=typeof m==='string'?m.split(',').map(names).join(' → '):null; ok=m===q.scene.order.join(',');
+    } else { const ci=q.options.findIndex(o=>o.ok); right=`${K[ci]}. ${q.options[ci].t}`; mine=m!=null&&q.options[m]?`${K[m]}. ${q.options[m].t}`:null; ok=m===ci; }
+    const label=q.kind==='triage'?'12:20 우선순위':(q.step!==undefined?`16:30 간호계획 · ${q.name}`:`${q.name} ${q.scene.title}`);
+    return `<li><b>${esc(label)}</b><br><span class="m ${mine==null?'none':ok?'ok':'no'}">${mine==null?'응답 안 함':ok?'정답':'오답'}</span>${mine!=null&&!ok?` · 내 답: ${esc(mine)}`:''}<br>정답: ${esc(right)}</li>`;
+  }).join('');
+  return `<h2 style="font-size:28px;color:var(--teal)">나의 보건일지</h2><p class="hint" style="text-align:left;margin:0">이 화면을 캡처해 두면 복습할 때 볼 수 있어요.</p><ul class="log">${items}</ul>`;
+}
+
+function render(){
+  const app=$('#app');
+  if(!room){ app.innerHTML=codeForm(); return; }
+  const ban=(room.match(/^w9([A-D])/i)||[])[1];
+  $('#label').textContent=`보건교사의 하루${ban?' · '+ban.toUpperCase()+'반':''}`;
+  const v=st.state; const s=v&&S.find(x=>x.id===v.scene);
+  $('#clock').textContent=s?s.time:'--:--';
+  if(!s||s.id==='intro'){ app.innerHTML=`<div class="wait"><h1>접속 완료</h1><p>선생님이 하루를 시작하면 첫 학생이 보건실에 옵니다. 선생님 화면을 봐 주세요.</p></div>${Store.live?'':'<span class="mode">체험 모드</span>'}`; return; }
+  if(s.id==='end'){ app.innerHTML=myLog(); return; }
+  if(s.type==='single') app.innerHTML=single(s);
+  else if(s.type==='plan') app.innerHTML=plan(s, v.step||0);
+  else app.innerHTML=triage(s);
+}
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button'); if(!t||t.disabled) return;
+  const v=st.state; const s=v&&S.find(x=>x.id===v.scene); if(!s) return;
+  if(t.dataset.a){ const qid=s.type==='plan'?'plan'+(v.step||0):s.id; if(!st.revealed[qid]) answer(qid, +t.dataset.a); return; }
+  if(t.dataset.t && s.type==='triage' && !st.revealed[s.id]){
+    if(!st.picking.includes(t.dataset.t)) st.picking.push(t.dataset.t);
+    if(st.picking.length===3){ answer(s.id, st.picking.join(',')); } else render();
+    return;
+  }
+  if('again' in t.dataset && !st.revealed[s.id]){ st.picking=[]; Store.remove(base+'/answers/'+s.id+'/'+sid); render(); }
+});
+document.addEventListener('submit',e=>{
+  e.preventDefault(); const c=($('#code').value||'').trim();
+  if(c){ const u=new URL(location.href); u.search='?r='+c.toLowerCase().replace(/^w9([a-d])/,(m,b)=>'w9'+b.toUpperCase()); location.href=u.href; }
+});
+if(room) start();
+render();
+</script>
+</body>
+</html>
